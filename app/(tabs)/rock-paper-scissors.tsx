@@ -7,7 +7,7 @@ export default function TabTwoScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
       <RockPaperScissorsScreen />
     </View>
   );

@@ -1,13 +1,18 @@
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { images } from "@/constants/Images";
+import { useEffect, useState } from "react";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 function RockPaperScissorsScreen() {
   const [selectedAction, setSelectedAction] = useState("");
   const [result, setResult] = useState<("win" | "lose" | "draw") | null>(null);
+  const [randomAction, setRandomAction] = useState<
+    ("scissors" | "rock" | "paper") | null
+  >(null);
 
   const handleActionButtonPress = (action: "scissors" | "rock" | "paper") => {
     setSelectedAction(action);
     setResult(null);
+    result && setRandomAction(null);
   };
 
   const handleReadyButtonPress = () => {
@@ -15,7 +20,9 @@ function RockPaperScissorsScreen() {
 
     const computerAction = ["scissors", "rock", "paper"][
       Math.floor(Math.random() * 3)
-    ];
+    ] as "scissors" | "rock" | "paper";
+
+    setRandomAction(computerAction);
 
     if (selectedAction === computerAction) {
       setResult("draw");
@@ -28,47 +35,89 @@ function RockPaperScissorsScreen() {
     }
   };
 
+  useEffect(() => {
+    if (result !== null) {
+      return;
+    }
+
+    const actions: ("scissors" | "rock" | "paper")[] = [
+      "scissors",
+      "rock",
+      "paper",
+    ];
+    let currentIndex = 0;
+
+    const interval = setInterval(() => {
+      setRandomAction(actions[currentIndex]);
+      currentIndex = (currentIndex + 1) % 3;
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [result]);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>剪刀石頭布</Text>
-      <Pressable style={styles.button}>
-        <Text style={styles.buttonText}>一局勝負</Text>
-      </Pressable>
-      <View style={styles.resultContainer}>
-        <Text style={styles.resultTitle}>勝負結果</Text>
-        {result === "win" && <Text style={styles.resultText}>你贏了</Text>}
-        {result === "lose" && <Text style={styles.resultText}>你輸了</Text>}
-        {result === "draw" && <Text style={styles.resultText}>平手</Text>}
-      </View>
-      <View style={styles.buttonsContainer}>
-        <Pressable
-          style={[
-            styles.actionButton,
-            selectedAction === "scissors" && styles.selectedActionButton,
-          ]}
-          onPress={() => handleActionButtonPress("scissors")}
-        >
-          <Text style={styles.actionButtonText}>剪刀</Text>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.actionButton,
-            selectedAction === "rock" && styles.selectedActionButton,
-          ]}
-          onPress={() => handleActionButtonPress("rock")}
-        >
-          <Text style={styles.actionButtonText}>石頭</Text>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.actionButton,
-            selectedAction === "paper" && styles.selectedActionButton,
-          ]}
-          onPress={() => handleActionButtonPress("paper")}
-        >
-          <Text style={styles.actionButtonText}>布</Text>
+      <View>
+        <Text style={styles.title}>剪刀石頭布</Text>
+        <Pressable style={styles.button}>
+          <Text style={styles.buttonText}>一局定勝負</Text>
         </Pressable>
       </View>
+      <View
+        style={{
+          width: "100%",
+          gap: 24,
+        }}
+      >
+        <View style={{ justifyContent: "center", alignItems: "center" }}>
+          <Image
+            source={
+              randomAction === "scissors"
+                ? images.scissors
+                : randomAction === "rock"
+                ? images.rock
+                : images.paper
+            }
+            style={styles.actionButtonImage}
+          />
+        </View>
+        <View style={styles.resultContainer}>
+          <Text style={styles.resultTitle}>勝負結果</Text>
+          {result === "win" && <Text style={styles.resultText}>你贏了</Text>}
+          {result === "lose" && <Text style={styles.resultText}>你輸了</Text>}
+          {result === "draw" && <Text style={styles.resultText}>平手</Text>}
+        </View>
+        <View style={styles.buttonsContainer}>
+          <Pressable
+            style={[
+              styles.actionButton,
+              selectedAction === "scissors" && styles.selectedActionButton,
+            ]}
+            onPress={() => handleActionButtonPress("scissors")}
+          >
+            <Image source={images.scissors} style={styles.actionButtonImage} />
+          </Pressable>
+          <Pressable
+            style={[
+              styles.actionButton,
+              selectedAction === "rock" && styles.selectedActionButton,
+            ]}
+            onPress={() => handleActionButtonPress("rock")}
+          >
+            <Image source={images.rock} style={styles.actionButtonImage} />
+          </Pressable>
+          <Pressable
+            style={[
+              styles.actionButton,
+              selectedAction === "paper" && styles.selectedActionButton,
+            ]}
+            onPress={() => handleActionButtonPress("paper")}
+          >
+            <Image source={images.paper} style={styles.actionButtonImage} />
+          </Pressable>
+        </View>
+      </View>
+
       <Pressable style={styles.readyButton} onPress={handleReadyButtonPress}>
         <Text style={styles.readyButtonText}>準備好了</Text>
       </Pressable>
@@ -79,6 +128,7 @@ function RockPaperScissorsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: "space-around",
     paddingHorizontal: 12,
   },
   title: {
@@ -119,9 +169,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   actionButton: {
-    backgroundColor: "#f8e50b",
-    padding: 12,
-    borderRadius: 5,
+    borderRadius: 25,
+    alignItems: "center",
+    justifyContent: "center",
   },
   actionButtonText: {
     fontWeight: "bold",
@@ -141,7 +191,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   selectedActionButton: {
-    backgroundColor: "green",
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: "green",
+    transform: [{ scale: 1.2 }],
+  },
+  actionButtonImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 30,
   },
 });
 
