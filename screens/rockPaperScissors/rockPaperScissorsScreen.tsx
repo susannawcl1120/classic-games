@@ -198,7 +198,9 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   actionButton: {
-    borderRadius: 30,
+    borderWidth: 3,
+    borderColor: "transparent",
+    borderRadius: 100,
     alignItems: "center",
     justifyContent: "center",
     padding: 8,
@@ -217,7 +219,7 @@ const styles = StyleSheet.create({
   actionButtonImage: {
     width: 50,
     height: 50,
-    borderRadius: 25,
+    borderRadius: 100,
   },
   readyButton: {
     backgroundColor: "#34C759",
