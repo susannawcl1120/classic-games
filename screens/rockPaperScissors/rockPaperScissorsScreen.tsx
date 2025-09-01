@@ -1,124 +1,127 @@
-import { images } from "@/constants/Images";
-import { useEffect, useState } from "react";
+import { ACTION_IMAGES, ACTIONS } from "@/constants/rockPaperScissors";
+import { Action, GameResult } from "@/types/rockPaperScissors";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
+const getGameResult = (
+  playerAction: Action,
+  computerAction: Action
+): GameResult => {
+  if (playerAction === computerAction) return "draw";
+
+  const winConditions = {
+    scissors: "paper",
+    rock: "scissors",
+    paper: "rock",
+  };
+
+  return winConditions[playerAction] === computerAction ? "win" : "lose";
+};
+
 function RockPaperScissorsScreen() {
-  const [selectedAction, setSelectedAction] = useState("");
-  const [result, setResult] = useState<("win" | "lose" | "draw") | null>(null);
-  const [randomAction, setRandomAction] = useState<
-    ("scissors" | "rock" | "paper") | null
-  >(null);
+  const [selectedAction, setSelectedAction] = useState<Action | "">("");
+  const [result, setResult] = useState<GameResult>(null);
+  const [computerAction, setComputerAction] = useState<Action | null>(null);
 
-  const handleActionButtonPress = (action: "scissors" | "rock" | "paper") => {
-    setSelectedAction(action);
+  const resetGame = useCallback(() => {
     setResult(null);
-    result && setRandomAction(null);
-  };
+    setComputerAction(null);
+  }, []);
 
-  const handleReadyButtonPress = () => {
-    if (selectedAction === "") return;
+  const handleActionButtonPress = useCallback(
+    (action: Action) => {
+      setSelectedAction(action);
+      result && resetGame();
+    },
+    [resetGame, result]
+  );
 
-    const computerAction = ["scissors", "rock", "paper"][
-      Math.floor(Math.random() * 3)
-    ] as "scissors" | "rock" | "paper";
+  const handleReadyButtonPress = useCallback(() => {
+    if (!selectedAction) return;
 
-    setRandomAction(computerAction);
+    const randomComputerAction =
+      ACTIONS[Math.floor(Math.random() * ACTIONS.length)];
+    setComputerAction(randomComputerAction);
 
-    if (selectedAction === computerAction) {
-      setResult("draw");
-    } else if (selectedAction === "scissors" && computerAction === "rock") {
-      setResult("lose");
-    } else if (selectedAction === "rock" && computerAction === "paper") {
-      setResult("lose");
-    } else {
-      setResult("win");
-    }
-  };
+    const gameResult = getGameResult(selectedAction, randomComputerAction);
+    setResult(gameResult);
+  }, [selectedAction]);
 
   useEffect(() => {
-    if (result !== null) {
-      return;
-    }
+    if (result !== null) return;
 
-    const actions: ("scissors" | "rock" | "paper")[] = [
-      "scissors",
-      "rock",
-      "paper",
-    ];
     let currentIndex = 0;
-
     const interval = setInterval(() => {
-      setRandomAction(actions[currentIndex]);
-      currentIndex = (currentIndex + 1) % 3;
+      setComputerAction(ACTIONS[currentIndex]);
+      currentIndex = (currentIndex + 1) % ACTIONS.length;
     }, 1000);
 
     return () => clearInterval(interval);
   }, [result]);
 
+  const currentImage = useMemo(() => {
+    if (!computerAction) return null;
+    return ACTION_IMAGES[computerAction];
+  }, [computerAction]);
+
+  const resultText = useMemo(() => {
+    switch (result) {
+      case "win":
+        return "你贏了";
+      case "lose":
+        return "你輸了";
+      case "draw":
+        return "平手";
+      default:
+        return null;
+    }
+  }, [result]);
+
   return (
     <View style={styles.container}>
-      <View>
+      <View style={styles.header}>
         <Text style={styles.title}>剪刀石頭布</Text>
-        <Pressable style={styles.button}>
-          <Text style={styles.buttonText}>一局定勝負</Text>
+        <Pressable style={styles.headerButton}>
+          <Text style={styles.headerButtonText}>一局定勝負</Text>
         </Pressable>
       </View>
-      <View
-        style={{
-          width: "100%",
-          gap: 24,
-        }}
-      >
-        <View style={{ justifyContent: "center", alignItems: "center" }}>
-          <Image
-            source={
-              randomAction === "scissors"
-                ? images.scissors
-                : randomAction === "rock"
-                ? images.rock
-                : images.paper
-            }
-            style={styles.actionButtonImage}
-          />
+
+      <View style={styles.gameArea}>
+        <View style={styles.computerActionContainer}>
+          {currentImage && (
+            <Image source={currentImage} style={styles.computerActionImage} />
+          )}
         </View>
+
         <View style={styles.resultContainer}>
           <Text style={styles.resultTitle}>勝負結果</Text>
-          {result === "win" && <Text style={styles.resultText}>你贏了</Text>}
-          {result === "lose" && <Text style={styles.resultText}>你輸了</Text>}
-          {result === "draw" && <Text style={styles.resultText}>平手</Text>}
+          {resultText && <Text style={styles.resultText}>{resultText}</Text>}
         </View>
-        <View style={styles.buttonsContainer}>
-          <Pressable
-            style={[
-              styles.actionButton,
-              selectedAction === "scissors" && styles.selectedActionButton,
-            ]}
-            onPress={() => handleActionButtonPress("scissors")}
-          >
-            <Image source={images.scissors} style={styles.actionButtonImage} />
-          </Pressable>
-          <Pressable
-            style={[
-              styles.actionButton,
-              selectedAction === "rock" && styles.selectedActionButton,
-            ]}
-            onPress={() => handleActionButtonPress("rock")}
-          >
-            <Image source={images.rock} style={styles.actionButtonImage} />
-          </Pressable>
-          <Pressable
-            style={[
-              styles.actionButton,
-              selectedAction === "paper" && styles.selectedActionButton,
-            ]}
-            onPress={() => handleActionButtonPress("paper")}
-          >
-            <Image source={images.paper} style={styles.actionButtonImage} />
-          </Pressable>
+
+        <View style={styles.actionsContainer}>
+          {ACTIONS.map((action) => (
+            <Pressable
+              key={action}
+              style={[
+                styles.actionButton,
+                selectedAction === action && styles.selectedActionButton,
+              ]}
+              onPress={() => handleActionButtonPress(action)}
+            >
+              <Image
+                source={ACTION_IMAGES[action]}
+                style={styles.actionButtonImage}
+              />
+            </Pressable>
+          ))}
         </View>
       </View>
 
-      <Pressable style={styles.readyButton} onPress={handleReadyButtonPress}>
+      <Pressable
+        style={[styles.readyButton, !selectedAction && styles.disabledButton]}
+        onPress={handleReadyButtonPress}
+        disabled={!selectedAction}
+      >
         <Text style={styles.readyButtonText}>準備好了</Text>
       </Pressable>
     </View>
@@ -129,77 +132,112 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "space-around",
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "#f5f5f5",
+  },
+  header: {
+    alignItems: "center",
+    gap: 12,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "bold",
     textAlign: "center",
+    color: "#333",
   },
-  button: {
-    backgroundColor: "blue",
-    marginVertical: 12,
-    padding: 12,
-    borderRadius: 5,
+  headerButton: {
+    backgroundColor: "#007AFF",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
   },
-  buttonText: {
+  headerButtonText: {
     color: "white",
     fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
+    fontWeight: "600",
+  },
+  gameArea: {
+    width: "100%",
+    gap: 24,
+  },
+  computerActionContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: 80,
+  },
+  computerActionImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
   },
   resultContainer: {
-    backgroundColor: "lightgray",
-    padding: 12,
-    borderRadius: 5,
+    backgroundColor: "white",
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   resultTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",
+    color: "#333",
+    marginBottom: 8,
   },
   resultText: {
     fontSize: 16,
     textAlign: "center",
+    color: "#666",
   },
-  buttonsContainer: {
-    marginVertical: 12,
+  actionsContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
+    justifyContent: "space-around",
+    gap: 16,
   },
   actionButton: {
-    borderRadius: 25,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-  },
-  actionButtonText: {
-    fontWeight: "bold",
-    color: "white",
-    fontSize: 16,
-    textAlign: "center",
-  },
-  readyButton: {
-    backgroundColor: "green",
-    padding: 12,
-    borderRadius: 5,
-  },
-  readyButtonText: {
-    fontWeight: "bold",
-    color: "white",
-    fontSize: 16,
-    textAlign: "center",
+    padding: 8,
+    backgroundColor: "white",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   selectedActionButton: {
-    borderRadius: 30,
-    borderWidth: 2,
-    borderColor: "green",
-    transform: [{ scale: 1.2 }],
+    borderWidth: 3,
+    borderColor: "#34C759",
+    transform: [{ scale: 1.1 }],
   },
   actionButtonImage: {
     width: 50,
     height: 50,
-    borderRadius: 30,
+    borderRadius: 25,
+  },
+  readyButton: {
+    backgroundColor: "#34C759",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  disabledButton: {
+    backgroundColor: "#ccc",
+  },
+  readyButtonText: {
+    fontWeight: "bold",
+    color: "white",
+    fontSize: 18,
+    textAlign: "center",
   },
 });
 
