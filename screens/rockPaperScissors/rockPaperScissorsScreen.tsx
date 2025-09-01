@@ -30,22 +30,36 @@ function RockPaperScissorsScreen() {
 
   const [result, setResult] = useState<GameResult>(null);
 
-  const [selectedGameMode, setSelectedGameMode] = useState<GameMode>("one");
+  const [selectedGameMode, setSelectedGameMode] = useState<GameMode>("1");
 
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
 
   const [computerAction, setComputerAction] = useState<Action | null>(null);
 
-  const resetGame = useCallback(() => {
-    setResult(null);
-    setComputerAction(null);
-    setSelectedAction("");
-  }, []);
+  const [totalCount, setTotalCount] = useState(1);
+
+  const [computerWinCount, setComputerWinCount] = useState(0);
+
+  const [playerWinCount, setPlayerWinCount] = useState(0);
+
+  const resetGame = useCallback(
+    (newGameMode?: GameMode) => {
+      setResult(null);
+      setComputerAction(null);
+      setSelectedAction("");
+      setComputerWinCount(0);
+      setPlayerWinCount(0);
+      setTotalCount(Number(newGameMode ? newGameMode : selectedGameMode));
+    },
+    [selectedGameMode]
+  );
 
   const handleActionButtonPress = useCallback(
     (action: Action) => {
       setSelectedAction(action);
-      result && resetGame();
+      if (result) {
+        resetGame();
+      }
     },
     [resetGame, result]
   );
@@ -59,7 +73,24 @@ function RockPaperScissorsScreen() {
 
     const gameResult = getGameResult(selectedAction, randomComputerAction);
     setResult(gameResult);
-  }, [selectedAction]);
+
+    if (selectedGameMode === "1") return;
+
+    const nextTotalCount = totalCount - 1;
+    setTotalCount(nextTotalCount);
+
+    if (gameResult === "win") {
+      setPlayerWinCount((prev) => prev + 1);
+    } else if (gameResult === "lose") {
+      setComputerWinCount((prev) => prev + 1);
+    }
+  }, [selectedAction, selectedGameMode, totalCount]);
+
+  const resetCurrentRound = useCallback(() => {
+    setResult(null);
+    setComputerAction(null);
+    setSelectedAction("");
+  }, []);
 
   const resultText = useMemo(() => {
     switch (result) {
@@ -76,17 +107,18 @@ function RockPaperScissorsScreen() {
 
   const handleUpdateGameMode = useCallback(
     (value: string) => {
-      setSelectedGameMode((prev) => {
-        const newMode = value as GameMode;
-        if (newMode === prev) return prev;
+      const newMode = value as GameMode;
+      if (newMode === selectedGameMode) {
+        setIsBottomSheetVisible(false);
+        return;
+      }
 
-        resetGame();
-        return newMode;
-      });
-
+      setSelectedGameMode(newMode);
+      setTotalCount(Number(value));
+      resetGame(newMode);
       setIsBottomSheetVisible(false);
     },
-    [resetGame, setIsBottomSheetVisible]
+    [selectedGameMode, resetGame]
   );
 
   return (
@@ -105,6 +137,7 @@ function RockPaperScissorsScreen() {
             title="選擇決鬥方式"
           />
         </View>
+        {selectedGameMode !== "1" && <Text>剩餘{totalCount}局</Text>}
       </View>
 
       <View style={styles.gameArea}>
@@ -115,8 +148,17 @@ function RockPaperScissorsScreen() {
         />
 
         <View style={styles.resultContainer}>
-          <Text style={styles.resultTitle}>勝負結果</Text>
-          {resultText && <Text style={styles.resultText}>{resultText}</Text>}
+          {selectedGameMode !== "1" && (
+            <Text>對方贏了{computerWinCount}次</Text>
+          )}
+          <View style={styles.resultTitle}>
+            <Text style={styles.resultTitleText}>
+              勝負結果{resultText && "："}
+            </Text>
+            {resultText && <Text style={styles.resultText}>{resultText}</Text>}
+          </View>
+
+          {selectedGameMode !== "1" && <Text>你贏了{playerWinCount}次</Text>}
         </View>
 
         <View style={styles.actionsContainer}>
@@ -128,6 +170,7 @@ function RockPaperScissorsScreen() {
                 selectedAction === action && styles.selectedActionButton,
               ]}
               onPress={() => handleActionButtonPress(action)}
+              disabled={result !== null}
             >
               <Image
                 source={ACTION_IMAGES[action]}
@@ -144,11 +187,29 @@ function RockPaperScissorsScreen() {
           !selectedAction && styles.disabledButton,
           result && styles.resetButton,
         ]}
-        onPress={result ? resetGame : handleReadyButtonPress}
+        onPress={() => {
+          if (result || totalCount === 0) {
+            if (selectedGameMode === "1") {
+              resetGame();
+            } else if (totalCount === 0) {
+              resetGame();
+            } else {
+              resetCurrentRound();
+            }
+          } else {
+            handleReadyButtonPress();
+          }
+        }}
         disabled={!selectedAction}
       >
         <Text style={styles.readyButtonText}>
-          {result ? "重新開始" : "準備好了"}
+          {result
+            ? totalCount === 0
+              ? "重新開局"
+              : selectedGameMode === "1"
+              ? "重新開始"
+              : "下一局"
+            : "準備好了"}
         </Text>
       </Pressable>
     </View>
@@ -193,6 +254,9 @@ const styles = StyleSheet.create({
     borderRadius: 30,
   },
   resultContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
     backgroundColor: "white",
     padding: 16,
     borderRadius: 12,
@@ -203,11 +267,20 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   resultTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
     fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",
     color: "#333",
-    marginBottom: 8,
+  },
+  resultTitleText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "#333",
   },
   resultText: {
     fontSize: 16,
