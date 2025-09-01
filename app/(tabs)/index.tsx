@@ -19,6 +19,9 @@ export default function HomeScreen() {
       <Link href="/(rockPaperScissors)/rock-paper-scissors">
         <ThemedText>Rock Paper Scissors</ThemedText>
       </Link>
+      <Link href="/(bingo)/bingo">
+        <ThemedText>Bingo</ThemedText>
+      </Link>
     </ParallaxScrollView>
   );
 }
