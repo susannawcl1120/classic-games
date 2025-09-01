@@ -1,7 +1,14 @@
-import { ACTION_IMAGES, ACTIONS } from "@/constants/rockPaperScissors";
-import { Action, GameResult } from "@/types/rockPaperScissors";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import DropdownText from "@/components/dropdownText/dropdownText";
+import {
+  ACTION_IMAGES,
+  ACTIONS,
+  GAME_MODE_MAP,
+  GAME_MODES,
+} from "@/constants/rockPaperScissors";
+import { Action, GameMode, GameResult } from "@/types/rockPaperScissors";
+import { useCallback, useMemo, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import RandomImage from "./components/randomImage";
 
 const getGameResult = (
   playerAction: Action,
@@ -20,12 +27,19 @@ const getGameResult = (
 
 function RockPaperScissorsScreen() {
   const [selectedAction, setSelectedAction] = useState<Action | "">("");
+
   const [result, setResult] = useState<GameResult>(null);
+
+  const [selectedGameMode, setSelectedGameMode] = useState<GameMode>("one");
+
+  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+
   const [computerAction, setComputerAction] = useState<Action | null>(null);
 
   const resetGame = useCallback(() => {
     setResult(null);
     setComputerAction(null);
+    setSelectedAction("");
   }, []);
 
   const handleActionButtonPress = useCallback(
@@ -47,23 +61,6 @@ function RockPaperScissorsScreen() {
     setResult(gameResult);
   }, [selectedAction]);
 
-  useEffect(() => {
-    if (result !== null) return;
-
-    let currentIndex = 0;
-    const interval = setInterval(() => {
-      setComputerAction(ACTIONS[currentIndex]);
-      currentIndex = (currentIndex + 1) % ACTIONS.length;
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [result]);
-
-  const currentImage = useMemo(() => {
-    if (!computerAction) return null;
-    return ACTION_IMAGES[computerAction];
-  }, [computerAction]);
-
   const resultText = useMemo(() => {
     switch (result) {
       case "win":
@@ -77,21 +74,45 @@ function RockPaperScissorsScreen() {
     }
   }, [result]);
 
+  const handleUpdateGameMode = useCallback(
+    (value: string) => {
+      setSelectedGameMode((prev) => {
+        const newMode = value as GameMode;
+        if (newMode === prev) return prev;
+
+        resetGame();
+        return newMode;
+      });
+
+      setIsBottomSheetVisible(false);
+    },
+    [resetGame, setIsBottomSheetVisible]
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>剪刀石頭布</Text>
-        <Pressable style={styles.headerButton}>
-          <Text style={styles.headerButtonText}>一局定勝負</Text>
-        </Pressable>
+        <View style={styles.headerButton}>
+          <DropdownText
+            text={GAME_MODE_MAP[selectedGameMode] || "選擇決鬥方式"}
+            onPress={() => setIsBottomSheetVisible(true)}
+            visible={isBottomSheetVisible}
+            setVisible={setIsBottomSheetVisible}
+            options={GAME_MODES}
+            checkedValue={selectedGameMode}
+            handleUpdateValue={handleUpdateGameMode}
+            title="選擇決鬥方式"
+          />
+        </View>
       </View>
 
       <View style={styles.gameArea}>
-        <View style={styles.computerActionContainer}>
-          {currentImage && (
-            <Image source={currentImage} style={styles.computerActionImage} />
-          )}
-        </View>
+        <RandomImage
+          result={result}
+          computerAction={computerAction}
+          setComputerAction={setComputerAction}
+        />
 
         <View style={styles.resultContainer}>
           <Text style={styles.resultTitle}>勝負結果</Text>
@@ -118,11 +139,17 @@ function RockPaperScissorsScreen() {
       </View>
 
       <Pressable
-        style={[styles.readyButton, !selectedAction && styles.disabledButton]}
-        onPress={handleReadyButtonPress}
+        style={[
+          styles.readyButton,
+          !selectedAction && styles.disabledButton,
+          result && styles.resetButton,
+        ]}
+        onPress={result ? resetGame : handleReadyButtonPress}
         disabled={!selectedAction}
       >
-        <Text style={styles.readyButtonText}>準備好了</Text>
+        <Text style={styles.readyButtonText}>
+          {result ? "重新開始" : "準備好了"}
+        </Text>
       </Pressable>
     </View>
   );
@@ -150,11 +177,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
-  },
-  headerButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
   },
   gameArea: {
     width: "100%",
@@ -231,6 +253,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  resetButton: {
+    backgroundColor: "#FF3B30",
   },
   disabledButton: {
     backgroundColor: "#ccc",
