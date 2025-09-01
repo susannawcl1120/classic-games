@@ -45,15 +45,6 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="rock-paper-scissors"
-        options={{
-          title: "Rock Paper Scissors",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="paperplane.fill" color={color} />
-          ),
-        }}
-      />
     </Tabs>
   );
 }
