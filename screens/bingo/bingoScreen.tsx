@@ -123,7 +123,6 @@ function BingoScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#1a1a1a",
     padding: 20,
