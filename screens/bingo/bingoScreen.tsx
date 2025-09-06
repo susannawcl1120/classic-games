@@ -1,68 +1,75 @@
-import { useState } from "react";
+import { slotSymbols } from "@/constants/bingo";
+import { useCallback, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import BingoCard from "./components/BingoCard";
 
-const SLOT_SYMBOLS = ["🍎", "🍊", "🍇", "🍒", "🍋", "💎", "7️⃣", "🎰"];
-
 function BingoScreen() {
   const [isSpinning, setIsSpinning] = useState(false);
-  const [symbols, setSymbols] = useState(["🍎", "🍊", "🍇"]);
+  const [targetSymbols, setTargetSymbols] = useState<string[]>([
+    "🍎",
+    "🍊",
+    "🍇",
+  ]);
   const [result, setResult] = useState<string | null>(null);
+  const completedCountRef = useRef(0);
 
-  const handleSpin = () => {
-    if (isSpinning) return;
+  const resetCompletion = useCallback(() => {
+    completedCountRef.current = 0;
+  }, []);
 
-    setIsSpinning(true);
-    setResult(null);
-
-    setTimeout(() => {
-      const newSymbols = [];
-      for (let i = 0; i < 3; i++) {
-        newSymbols.push(
-          SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)]
-        );
-      }
-      setSymbols(newSymbols);
+  const onChildComplete = useCallback(() => {
+    completedCountRef.current += 1;
+    if (completedCountRef.current === 3) {
       setIsSpinning(false);
 
-      if (newSymbols[0] === newSymbols[1] && newSymbols[1] === newSymbols[2]) {
-        setResult("🎉 恭喜中獎！");
-      } else if (
-        newSymbols[0] === newSymbols[1] ||
-        newSymbols[1] === newSymbols[2] ||
-        newSymbols[0] === newSymbols[2]
-      ) {
-        setResult("🎊 小獎！");
-      } else {
-        setResult("😔 再接再厲");
-      }
-    }, 2000);
-  };
+      setResult(() => {
+        const [a, b, c] = targetSymbols;
+        if (a === b && b === c) return "🎉 恭喜中獎！";
+        if (a === b || b === c || a === c) return "🎊 小獎！";
+        return "😔 再接再厲";
+      });
+    }
+  }, [targetSymbols]);
 
-  const handleGuaranteedWin = () => {
+  const randomPick = useCallback(
+    () => slotSymbols[Math.floor(Math.random() * slotSymbols.length)],
+    []
+  );
+
+  const handleSpin = useCallback(() => {
     if (isSpinning) return;
 
-    setIsSpinning(true);
     setResult(null);
+    resetCompletion();
 
-    setTimeout(() => {
-      const randomSymbol =
-        SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)];
-      const newSymbols = [randomSymbol, randomSymbol, randomSymbol];
-      setSymbols(newSymbols);
-      setIsSpinning(false);
+    const next = [randomPick(), randomPick(), randomPick()];
+    setTargetSymbols(next);
+    setIsSpinning(true);
+  }, [isSpinning, randomPick, resetCompletion]);
 
-      setResult("🎉 恭喜中獎！");
-    }, 2000);
-  };
+  const handleGuaranteedWin = useCallback(() => {
+    if (isSpinning) return;
+
+    setResult(null);
+    resetCompletion();
+
+    const s = randomPick();
+    setTargetSymbols([s, s, s]);
+    setIsSpinning(true);
+  }, [isSpinning, randomPick, resetCompletion]);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>🎰 Bingo 🎰</Text>
 
       <View style={styles.cardsContainer}>
-        {symbols.map((symbol, index) => (
-          <BingoCard key={index} symbol={symbol} isSpinning={isSpinning} />
+        {targetSymbols.map((target, index) => (
+          <BingoCard
+            key={index}
+            spinning={isSpinning}
+            targetSymbol={target}
+            onSpinComplete={onChildComplete}
+          />
         ))}
       </View>
 

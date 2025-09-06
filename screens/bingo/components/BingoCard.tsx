@@ -1,122 +1,128 @@
+import { slotSymbols } from "@/constants/bingo";
 import { metrics } from "@/theme/metrics";
-import { useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import { useEffect, useMemo, useRef } from "react";
+import { Animated, Easing, StyleSheet, Text, View } from "react-native";
 
 interface BingoCardProps {
-  isSpinning?: boolean;
-  symbol?: string;
+  spinning: boolean;
+  targetSymbol: string;
+  symbols?: string[];
   onSpinComplete?: () => void;
+  durationMs?: number;
 }
 
+const WINDOW_HEIGHT = metrics.hp(100);
+const ITEM_HEIGHT = WINDOW_HEIGHT;
+
 function BingoCard({
-  isSpinning = false,
-  symbol = "🍎",
+  spinning,
+  targetSymbol,
+  symbols = slotSymbols,
   onSpinComplete,
+  durationMs = 1600,
 }: BingoCardProps) {
-  const spinAnimation = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+
+  const extendedSymbols = useMemo(() => {
+    const loops = 10;
+    return Array.from({ length: loops }).flatMap(() => symbols);
+  }, [symbols]);
+
+  const stopIndex = useMemo(() => {
+    const loops = Math.floor(extendedSymbols.length / symbols.length);
+    const lastLoopStart = Math.max(0, (loops - 1) * symbols.length);
+    const idxInBase = symbols.indexOf(targetSymbol);
+    const idx = idxInBase >= 0 ? lastLoopStart + idxInBase : lastLoopStart;
+
+    return Math.min(idx, extendedSymbols.length - 1);
+  }, [extendedSymbols, symbols, targetSymbol]);
 
   useEffect(() => {
-    if (isSpinning) {
-      Animated.loop(
-        Animated.timing(spinAnimation, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        })
-      ).start();
-    } else {
-      spinAnimation.stopAnimation();
-      spinAnimation.setValue(0);
-    }
-  }, [isSpinning, spinAnimation]);
+    if (!spinning) return;
 
-  const spinInterpolate = spinAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  });
+    translateY.setValue(0);
+
+    const targetOffset = -stopIndex * ITEM_HEIGHT;
+
+    Animated.timing(translateY, {
+      toValue: targetOffset,
+      duration: durationMs,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start(() => {
+      onSpinComplete?.();
+    });
+  }, [spinning, stopIndex, durationMs, translateY, onSpinComplete]);
 
   return (
     <View style={styles.container}>
-      <View style={styles.cardGradient}>
-        <View style={styles.cardContent}>
-          <Animated.View
-            style={[
-              styles.symbolContainer,
-              { transform: [{ rotate: spinInterpolate }] },
-            ]}
-          >
-            <View style={styles.symbolBackground}>
-              <Text style={styles.symbol}>{symbol}</Text>
+      <View style={styles.window}>
+        <Animated.View style={{ transform: [{ translateY }] }}>
+          {extendedSymbols.map((s, i) => (
+            <View
+              key={`${s}-${i}`}
+              style={[styles.item, { height: ITEM_HEIGHT }]}
+            >
+              <Text style={[styles.symbol, { fontSize: ITEM_HEIGHT * 0.4 }]}>
+                {s}
+              </Text>
             </View>
-          </Animated.View>
-        </View>
-
-        <View style={styles.outerBorder} />
+          ))}
+        </Animated.View>
+        <View pointerEvents="none" style={styles.windowOverlay} />
       </View>
+      <View pointerEvents="none" style={styles.outerBorder} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    width: metrics.wp(100),
-    height: metrics.hp(80),
-    justifyContent: "center",
     alignItems: "center",
-    position: "relative",
-  },
-  cardGradient: {
-    width: metrics.wp(100),
-    height: metrics.hp(80),
-    borderRadius: 12,
     justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
-    backgroundColor: "#FFD700",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    height: metrics.hp(100),
+    width: metrics.wp(100),
   },
-  cardContent: {
+  window: {
+    height: metrics.hp(100),
+    width: metrics.wp(100),
+    overflow: "hidden",
+    borderRadius: 14,
+    backgroundColor: "#111",
+    alignItems: "center",
+  },
+  item: {
     width: "100%",
-    height: "100%",
-    justifyContent: "center",
     alignItems: "center",
-    padding: 8,
-  },
-  symbolContainer: {
-    flex: 1,
     justifyContent: "center",
-    alignItems: "center",
-  },
-  symbolBackground: {
-    width: metrics.wp(60),
-    height: metrics.hp(50),
-    backgroundColor: "rgba(255,255,255,0.9)",
-    borderRadius: metrics.wp(7.5),
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#8B4513",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    backgroundColor: "#222",
   },
   symbol: {
-    fontSize: metrics.wp(40),
+    color: "#fff",
     fontWeight: "bold",
+  },
+  windowOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: "#FFD700",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 8,
   },
   outerBorder: {
     position: "absolute",
     top: 0,
+    bottom: 0,
     left: 0,
     right: 0,
-    bottom: 0,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 2,
     borderColor: "#8B4513",
   },
