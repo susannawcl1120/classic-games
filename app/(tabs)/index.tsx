@@ -22,6 +22,9 @@ export default function HomeScreen() {
       <Link href="/(bingo)/bingo">
         <ThemedText>Bingo</ThemedText>
       </Link>
+      <Link href="/(sicBo)/sicBo">
+        <ThemedText>Sic Bo</ThemedText>
+      </Link>
     </ParallaxScrollView>
   );
 }
