@@ -3,4 +3,5 @@ export const images = {
   paper: require("@/assets/images/paper.png"),
   scissors: require("@/assets/images/scissors.png"),
   close: require("@/assets/images/close.png"),
+  homeBg: require("@/assets/images/homeBg.png"),
 };
