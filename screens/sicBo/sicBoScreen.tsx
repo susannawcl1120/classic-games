@@ -11,19 +11,26 @@ interface BettingPosition {
 }
 
 function SicBoScreen() {
+  const [count, setCount] = useState(10);
+  const [balance, setBalance] = useState(1000);
   const [selectedChip, setSelectedChip] = useState<number | null>(null);
   const [bigBets, setBigBets] = useState<BettingPosition[]>([]);
   const [smallBets, setSmallBets] = useState<BettingPosition[]>([]);
   const [isAnimating, setIsAnimating] = useState(false);
   const [bigTotal, setBigTotal] = useState(0);
   const [smallTotal, setSmallTotal] = useState(0);
+  const [diceTotal, setDiceTotal] = useState(0);
 
   const bigBoxRef = useRef<View>(null);
   const smallBoxRef = useRef<View>(null);
 
-  const handleChipSelect = useCallback((value: number) => {
-    setSelectedChip(value);
-  }, []);
+  const handleChipSelect = useCallback(
+    (value: number) => {
+      if (count <= 0) return;
+      setSelectedChip(value);
+    },
+    [count]
+  );
 
   const getRandomPosition = useCallback(
     (
@@ -50,9 +57,11 @@ function SicBoScreen() {
         } else {
           resolve({ x: 50, y: 50, value });
         }
+
+        setBalance(balance - value);
       });
     },
-    []
+    [balance]
   );
 
   const handleBet = useCallback(
@@ -81,6 +90,29 @@ function SicBoScreen() {
     [selectedChip, isAnimating, getRandomPosition]
   );
 
+  const handleReset = () => {
+    if (diceTotal >= 11 && diceTotal <= 17) {
+      setBalance(balance + bigTotal * 2);
+    } else if (diceTotal >= 4 && diceTotal <= 10) {
+      setBalance(balance + smallTotal * 2);
+    }
+    setBigBets([]);
+    setSmallBets([]);
+    setBigTotal(0);
+    setSmallTotal(0);
+    setDiceTotal(0);
+    setCount(10);
+  };
+
+  const handleRollDice = () => {
+    const dice = [
+      Math.floor(Math.random() * 6) + 1,
+      Math.floor(Math.random() * 6) + 1,
+      Math.floor(Math.random() * 6) + 1,
+    ];
+    setDiceTotal(dice.reduce((acc, curr) => acc + curr, 0));
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -89,7 +121,11 @@ function SicBoScreen() {
           規則：倒數10秒內可以選擇下注大或小，贏家會得到下注金額的雙倍
         </Text>
       </View>
-      <CountDown />
+      <CountDown
+        handleShowResult={handleRollDice}
+        count={count}
+        setCount={setCount}
+      />
 
       <View style={styles.chipsContainer}>
         <Pressable onPress={() => handleChipSelect(5)}>
@@ -110,8 +146,9 @@ function SicBoScreen() {
         <Pressable
           ref={bigBoxRef}
           style={[
-            styles.bigBettingBox,
+            styles.bettingBox,
             selectedChip ? styles.selectedBettingBox : null,
+            diceTotal >= 11 && diceTotal <= 17 && styles.bettingBoxActive,
           ]}
           onPress={() => handleBet("big")}
           disabled={!selectedChip || isAnimating}
@@ -137,8 +174,9 @@ function SicBoScreen() {
         <Pressable
           ref={smallBoxRef}
           style={[
-            styles.smallBettingBox,
+            styles.bettingBox,
             selectedChip ? styles.selectedBettingBox : null,
+            diceTotal >= 4 && diceTotal <= 10 && styles.bettingBoxActive,
           ]}
           onPress={() => handleBet("small")}
           disabled={!selectedChip || isAnimating}
@@ -166,6 +204,10 @@ function SicBoScreen() {
         <Text style={styles.totalCountText}>累計{bigTotal}</Text>
         <Text style={styles.totalCountText}>累計{smallTotal}</Text>
       </View>
+      <Text style={styles.balanceText}>錢包剩餘：{balance}</Text>
+      <Pressable style={styles.resetButton} onPress={handleReset}>
+        <Text>下一局</Text>
+      </Pressable>
     </View>
   );
 }
@@ -190,7 +232,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   chipsContainer: {
-    height: metrics.hp(140),
+    height: metrics.hp(100),
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
@@ -210,23 +252,12 @@ const styles = StyleSheet.create({
     marginTop: 30,
     gap: 20,
   },
-  bigBettingBox: {
-    flex: 1,
-    backgroundColor: "#FF6B6B",
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#FF4757",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    elevation: 8,
-    borderWidth: 3,
-    borderColor: "#FF4757",
+  bettingBoxActive: {
+    backgroundColor: "#FFD700",
+    shadowColor: "#FFA500",
+    borderColor: "#FFA500",
   },
-  smallBettingBox: {
+  bettingBox: {
     flex: 1,
     backgroundColor: "#4ECDC4",
     paddingVertical: 40,
@@ -275,6 +306,18 @@ const styles = StyleSheet.create({
     gap: metrics.spacing.sm,
     width: "100%",
     paddingHorizontal: 20,
+  },
+  balanceText: {
+    fontSize: 24,
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    marginTop: 20,
+  },
+  resetButton: {
+    marginTop: 20,
+    backgroundColor: "#FFD700",
+    padding: 10,
+    borderRadius: 10,
   },
 });
 
