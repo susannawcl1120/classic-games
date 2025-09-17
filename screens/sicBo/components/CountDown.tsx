@@ -1,5 +1,5 @@
 import { metrics } from "@/theme/metrics";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 
 function CountDown({
@@ -13,15 +13,23 @@ function CountDown({
 }) {
   const scaleAnim = useState(new Animated.Value(1))[0];
   const pulseAnim = useState(new Animated.Value(1))[0];
+  const handleShowResultRef = useRef(handleShowResult);
 
   useEffect(() => {
-    if (count <= 0) return;
+    handleShowResultRef.current = handleShowResult;
+  }, [handleShowResult]);
+
+  useEffect(() => {
+    if (count <= 0) {
+      handleShowResultRef.current();
+      return;
+    }
 
     const interval = setInterval(() => {
       setCount((prevCount) => {
         if (prevCount <= 1) {
           clearInterval(interval);
-          handleShowResult();
+          handleShowResultRef.current();
           return 0;
         }
         return prevCount - 1;
@@ -29,7 +37,7 @@ function CountDown({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [count, handleShowResult, setCount]);
+  }, [count, setCount]);
 
   useEffect(() => {
     Animated.sequence([

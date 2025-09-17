@@ -12,7 +12,7 @@ interface BettingPosition {
 }
 
 function SicBoScreen() {
-  const [count, setCount] = useState(3);
+  const [count, setCount] = useState(10);
   const [balance, setBalance] = useState(1000);
   const [selectedChip, setSelectedChip] = useState<number | null>(null);
   const [bigBets, setBigBets] = useState<BettingPosition[]>([]);
@@ -61,22 +61,29 @@ function SicBoScreen() {
         } else {
           resolve({ x: 50, y: 50, value });
         }
-
-        setBalance(balance - value);
       });
     },
-    [balance]
+    []
   );
 
   const handleBet = useCallback(
     async (betType: "big" | "small") => {
-      if (!selectedChip || isAnimating) return;
+      if (!selectedChip || isAnimating || balance < selectedChip) return;
+
+      if (betType === "big" && smallTotal > 0) {
+        return;
+      }
+      if (betType === "small" && bigTotal > 0) {
+        return;
+      }
 
       setIsAnimating(true);
 
       try {
         const targetBox = betType === "big" ? bigBoxRef : smallBoxRef;
         const position = await getRandomPosition(targetBox, selectedChip);
+
+        setBalance((prevBalance) => prevBalance - selectedChip);
 
         if (betType === "big") {
           setBigBets((prev) => [...prev, position]);
@@ -91,7 +98,14 @@ function SicBoScreen() {
         setTimeout(() => setIsAnimating(false), 1000);
       }
     },
-    [selectedChip, isAnimating, getRandomPosition]
+    [
+      selectedChip,
+      isAnimating,
+      getRandomPosition,
+      bigTotal,
+      smallTotal,
+      balance,
+    ]
   );
 
   const handleReset = () => {
@@ -103,7 +117,7 @@ function SicBoScreen() {
     setWinnings(0);
     setGameResult(null);
     setShowResultAnimation(false);
-    setCount(3);
+    setCount(10);
   };
 
   const handleRollDice = () => {
@@ -177,9 +191,10 @@ function SicBoScreen() {
             styles.bettingBox,
             selectedChip ? styles.selectedBettingBox : null,
             diceTotal >= 11 && diceTotal <= 17 && styles.bettingBoxActive,
+            smallTotal > 0 && styles.bettingBoxDisabled,
           ]}
           onPress={() => handleBet("big")}
-          disabled={!selectedChip || isAnimating}
+          disabled={!selectedChip || isAnimating || smallTotal > 0}
         >
           <Text style={styles.bettingText}>大</Text>
           <Text style={styles.bettingSubText}>11-17</Text>
@@ -205,9 +220,10 @@ function SicBoScreen() {
             styles.bettingBox,
             selectedChip ? styles.selectedBettingBox : null,
             diceTotal >= 4 && diceTotal <= 10 && styles.bettingBoxActive,
+            bigTotal > 0 && styles.bettingBoxDisabled,
           ]}
           onPress={() => handleBet("small")}
-          disabled={!selectedChip || isAnimating}
+          disabled={!selectedChip || isAnimating || bigTotal > 0}
         >
           <Text style={styles.bettingText}>小</Text>
           <Text style={styles.bettingSubText}>4-10</Text>
@@ -318,6 +334,11 @@ const styles = StyleSheet.create({
   },
   selectedBettingBox: {
     shadowOpacity: 0.8,
+  },
+  bettingBoxDisabled: {
+    backgroundColor: "#666666",
+    borderColor: "#444444",
+    opacity: 0.5,
   },
   betChip: {
     zIndex: 10,
