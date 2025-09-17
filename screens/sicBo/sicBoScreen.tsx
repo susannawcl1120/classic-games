@@ -3,6 +3,7 @@ import { metrics } from "@/theme/metrics";
 import { useCallback, useRef, useState } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import CountDown from "./components/CountDown";
+import ResultAnimation from "./components/ResultAnimation";
 
 interface BettingPosition {
   x: number;
@@ -11,7 +12,7 @@ interface BettingPosition {
 }
 
 function SicBoScreen() {
-  const [count, setCount] = useState(10);
+  const [count, setCount] = useState(3);
   const [balance, setBalance] = useState(1000);
   const [selectedChip, setSelectedChip] = useState<number | null>(null);
   const [bigBets, setBigBets] = useState<BettingPosition[]>([]);
@@ -20,6 +21,9 @@ function SicBoScreen() {
   const [bigTotal, setBigTotal] = useState(0);
   const [smallTotal, setSmallTotal] = useState(0);
   const [diceTotal, setDiceTotal] = useState(0);
+  const [showResultAnimation, setShowResultAnimation] = useState(false);
+  const [gameResult, setGameResult] = useState<"win" | "lose" | null>(null);
+  const [winnings, setWinnings] = useState(0);
 
   const bigBoxRef = useRef<View>(null);
   const smallBoxRef = useRef<View>(null);
@@ -91,30 +95,61 @@ function SicBoScreen() {
   );
 
   const handleReset = () => {
-    if (diceTotal >= 11 && diceTotal <= 17) {
-      setBalance(balance + bigTotal * 2);
-    } else if (diceTotal >= 4 && diceTotal <= 10) {
-      setBalance(balance + smallTotal * 2);
-    }
     setBigBets([]);
     setSmallBets([]);
     setBigTotal(0);
     setSmallTotal(0);
     setDiceTotal(0);
-    setCount(10);
+    setWinnings(0);
+    setGameResult(null);
+    setShowResultAnimation(false);
+    setCount(3);
   };
 
   const handleRollDice = () => {
-    const dice = [
+    const newDice = [
       Math.floor(Math.random() * 6) + 1,
       Math.floor(Math.random() * 6) + 1,
       Math.floor(Math.random() * 6) + 1,
     ];
-    setDiceTotal(dice.reduce((acc, curr) => acc + curr, 0));
+
+    const total = newDice.reduce((sum, die) => sum + die, 0);
+    setDiceTotal(total);
+
+    const isWin =
+      (total >= 11 && bigTotal > 0) || (total <= 10 && smallTotal > 0);
+
+    if (isWin) {
+      let winningsAmount = 0;
+      // 大贏了
+      if (total >= 11 && bigTotal > 0) {
+        winningsAmount += bigTotal * 2;
+      }
+      // 小贏了
+      if (total <= 10 && smallTotal > 0) {
+        winningsAmount += smallTotal * 2;
+      }
+
+      setWinnings(winningsAmount);
+      setBalance((prevBalance) => prevBalance + winningsAmount);
+    }
+
+    if (bigTotal > 0 || smallTotal > 0) {
+      setGameResult(isWin ? "win" : "lose");
+      setShowResultAnimation(true);
+    }
   };
 
   return (
     <View style={styles.container}>
+      <ResultAnimation
+        isWin={gameResult === "win"}
+        showAnimation={showResultAnimation}
+        diceTotal={diceTotal}
+        winnings={winnings}
+        onAnimationComplete={handleReset}
+      />
+
       <View style={styles.header}>
         <Text style={styles.title}>🎲 Sic Bo 🎲</Text>
         <Text style={styles.ruleText}>
@@ -128,18 +163,11 @@ function SicBoScreen() {
       />
 
       <View style={styles.chipsContainer}>
-        <Pressable onPress={() => handleChipSelect(5)}>
-          <PokerChip value={5} size={selectedChip === 5 ? 70 : 60} />
-        </Pressable>
-        <Pressable onPress={() => handleChipSelect(10)}>
-          <PokerChip value={10} size={selectedChip === 10 ? 70 : 60} />
-        </Pressable>
-        <Pressable onPress={() => handleChipSelect(25)}>
-          <PokerChip value={25} size={selectedChip === 25 ? 70 : 60} />
-        </Pressable>
-        <Pressable onPress={() => handleChipSelect(100)}>
-          <PokerChip value={100} size={selectedChip === 100 ? 70 : 60} />
-        </Pressable>
+        {[5, 10, 25, 100].map((value) => (
+          <Pressable key={value} onPress={() => handleChipSelect(value)}>
+            <PokerChip value={value} size={selectedChip === value ? 70 : 60} />
+          </Pressable>
+        ))}
       </View>
 
       <View style={styles.bettingArea}>
