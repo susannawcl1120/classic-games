@@ -1,6 +1,6 @@
 import { metrics } from "@/theme/metrics";
 import { useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text } from "react-native";
+import { Animated, Pressable, StyleSheet, Text } from "react-native";
 
 type Props = {
   isWin: boolean;
@@ -76,8 +76,15 @@ function ResultAnimation({
 
   if (!showAnimation) return null;
 
+  const closeAnimation = () => {
+    winAnimationRef.setValue(0);
+    loseAnimationRef.setValue(0);
+    confettiRefs.forEach((ref) => ref.setValue(0));
+    onAnimationComplete();
+  };
+
   return (
-    <>
+    <Pressable style={styles.container} onPress={closeAnimation}>
       {isWin && (
         <Animated.View
           style={[
@@ -158,11 +165,19 @@ function ResultAnimation({
           <Text style={styles.loseHintText}>下次一定會贏的！</Text>
         </Animated.View>
       )}
-    </>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
   winOverlay: {
     position: "absolute",
     top: 0,
