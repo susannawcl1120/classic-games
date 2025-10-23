@@ -1,5 +1,17 @@
 {
     "common": {
         "game": "遊戲"
+    },
+    "rockPaperScissors": {
+        "title": "剪刀石頭布",
+        "selectGameMode": "選擇決鬥方式",
+        "remainingGames": "剩餘{{count}}局",
+        "computerWins": "對方贏了{{count}}次",
+        "resultTitle": "勝負結果",
+        "playerWins": "你贏了{{count}}次",
+        "resetGame": "重新開局",
+        "reStart": "重新開始",
+        "nextRound": "下一局",
+        "ready": "準備好了"
     }
 }

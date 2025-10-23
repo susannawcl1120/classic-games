@@ -7,6 +7,7 @@ import {
 } from "@/constants/rockPaperScissors";
 import { Action, GameMode, GameResult } from "@/types/rockPaperScissors";
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import RandomImage from "./components/randomImage";
 
@@ -26,6 +27,8 @@ const getGameResult = (
 };
 
 function RockPaperScissorsScreen() {
+  const { t } = useTranslation();
+
   const [selectedAction, setSelectedAction] = useState<Action | "">("");
 
   const [result, setResult] = useState<GameResult>(null);
@@ -124,20 +127,27 @@ function RockPaperScissorsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>剪刀石頭布</Text>
+        <Text style={styles.title}>{t("rockPaperScissors.title")}</Text>
         <View style={styles.headerButton}>
           <DropdownText
-            text={GAME_MODE_MAP[selectedGameMode] || "選擇決鬥方式"}
+            text={
+              GAME_MODE_MAP[selectedGameMode] ||
+              t("rockPaperScissors.selectGameMode")
+            }
             onPress={() => setIsBottomSheetVisible(true)}
             visible={isBottomSheetVisible}
             setVisible={setIsBottomSheetVisible}
             options={GAME_MODES}
             checkedValue={selectedGameMode}
             handleUpdateValue={handleUpdateGameMode}
-            title="選擇決鬥方式"
+            title={t("rockPaperScissors.selectGameMode")}
           />
         </View>
-        {selectedGameMode !== "1" && <Text>剩餘{totalCount}局</Text>}
+        {selectedGameMode !== "1" && (
+          <Text>
+            {t("rockPaperScissors.remainingGames", { count: totalCount })}
+          </Text>
+        )}
       </View>
 
       <View style={styles.gameArea}>
@@ -149,16 +159,27 @@ function RockPaperScissorsScreen() {
 
         <View style={styles.resultContainer}>
           {selectedGameMode !== "1" && (
-            <Text>對方贏了{computerWinCount}次</Text>
+            <Text>
+              {t("rockPaperScissors.computerWins", {
+                count: computerWinCount,
+              })}
+            </Text>
           )}
           <View style={styles.resultTitle}>
             <Text style={styles.resultTitleText}>
-              勝負結果{resultText && "："}
+              {t("rockPaperScissors.resultTitle")}
+              {resultText && "："}
             </Text>
             {resultText && <Text style={styles.resultText}>{resultText}</Text>}
           </View>
 
-          {selectedGameMode !== "1" && <Text>你贏了{playerWinCount}次</Text>}
+          {selectedGameMode !== "1" && (
+            <Text>
+              {t("rockPaperScissors.playerWins", {
+                count: playerWinCount,
+              })}
+            </Text>
+          )}
         </View>
 
         <View style={styles.actionsContainer}>
@@ -205,11 +226,11 @@ function RockPaperScissorsScreen() {
         <Text style={styles.readyButtonText}>
           {result
             ? totalCount === 0
-              ? "重新開局"
+              ? t("rockPaperScissors.resetGame")
               : selectedGameMode === "1"
-              ? "重新開始"
-              : "下一局"
-            : "準備好了"}
+              ? t("rockPaperScissors.reStart")
+              : t("rockPaperScissors.nextRound")
+            : t("rockPaperScissors.ready")}
         </Text>
       </Pressable>
     </View>

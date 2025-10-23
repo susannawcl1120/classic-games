@@ -1,5 +1,17 @@
 {
     "common": {
         "game": "games"
+    },
+    "rockPaperScissors": {
+        "title": "title",
+        "selectGameMode": "Choose duel mode",
+        "remainingGames": "{{count}} games remaining",
+        "computerWins": "The opponent won {{count}} times",
+        "resultTitle": "Win or Lose",
+        "playerWins": "You won {{count}} times",
+        "resetGame": "Restart",
+        "reStart": "Restart",
+        "nextRound": "Next round",
+        "ready": "Ready"
     }
 }
