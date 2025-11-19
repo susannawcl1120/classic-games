@@ -98,15 +98,15 @@ function RockPaperScissorsScreen() {
   const resultText = useMemo(() => {
     switch (result) {
       case "win":
-        return "你贏了";
+        return t("rockPaperScissors.youWon");
       case "lose":
-        return "你輸了";
+        return t("rockPaperScissors.youLose");
       case "draw":
-        return "平手";
+        return t("rockPaperScissors.draw");
       default:
         return null;
     }
-  }, [result]);
+  }, [result, t]);
 
   const handleUpdateGameMode = useCallback(
     (value: string) => {
@@ -131,7 +131,7 @@ function RockPaperScissorsScreen() {
         <View style={styles.headerButton}>
           <DropdownText
             text={
-              GAME_MODE_MAP[selectedGameMode] ||
+              t(GAME_MODE_MAP[selectedGameMode]) ||
               t("rockPaperScissors.selectGameMode")
             }
             onPress={() => setIsBottomSheetVisible(true)}

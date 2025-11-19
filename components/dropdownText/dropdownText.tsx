@@ -3,6 +3,7 @@ import { palette } from "@/theme/colors";
 import { metrics } from "@/theme/metrics";
 import { theme } from "@/theme/theme";
 import { fontSize } from "@/theme/typography";
+import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 type Props = {
@@ -28,6 +29,8 @@ function DropdownText({
   title,
   firstOption,
 }: Props) {
+  const { t } = useTranslation();
+
   return (
     <>
       <Pressable style={styles.dropdownBtn} onPress={onPress}>
@@ -43,7 +46,7 @@ function DropdownText({
         <View style={styles.container}>
           {firstOption && (
             <Text style={styles.option}>
-              <Text style={styles.optionText}>{firstOption}</Text>
+              <Text style={styles.optionText}>{t(firstOption)}</Text>
             </Text>
           )}
 
@@ -59,7 +62,7 @@ function DropdownText({
                   checkedValue === option.value && styles.activeOptionText,
                 ]}
               >
-                {option.label}
+                {t(option.label)}
               </Text>
               {checkedValue === option.value && <Text>✓</Text>}
             </Pressable>

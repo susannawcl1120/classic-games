@@ -12,6 +12,12 @@
         "resetGame": "重新開局",
         "reStart": "重新開始",
         "nextRound": "下一局",
-        "ready": "準備好了"
+        "ready": "準備好了",
+        "oneRound": "一局定勝負",
+        "threeRound": "三局兩勝",
+        "fiveRound": "五局三勝",
+        "youWon": "你贏了",
+        "youLose": "你輸了",
+        "draw": "平手"
     }
 }

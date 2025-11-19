@@ -10,13 +10,13 @@ export const ACTION_IMAGES = {
 };
 
 export const GAME_MODES: { label: string; value: GameMode }[] = [
-  { label: "一局定勝負", value: "1" },
-  { label: "三局兩勝", value: "3" },
-  { label: "五局三勝", value: "5" },
+  { label: "rockPaperScissors.oneRound", value: "1" },
+  { label: "rockPaperScissors.threeRound", value: "3" },
+  { label: "rockPaperScissors.fiveRound", value: "5" },
 ];
 
 export const GAME_MODE_MAP = {
-  "1": "一局定勝負",
-  "3": "三局兩勝",
-  "5": "五局三勝",
+  "1": "rockPaperScissors.oneRound",
+  "3": "rockPaperScissors.threeRound",
+  "5": "rockPaperScissors.fiveRound",
 };

@@ -3,15 +3,21 @@
         "game": "games"
     },
     "rockPaperScissors": {
-        "title": "title",
-        "selectGameMode": "Choose duel mode",
-        "remainingGames": "{{count}} games remaining",
-        "computerWins": "The opponent won {{count}} times",
-        "resultTitle": "Win or Lose",
-        "playerWins": "You won {{count}} times",
+        "title": "Paper Scissor Stone",
+        "selectGameMode": "Choose the method of duel",
+        "remainingGames": "Remaining {{count}} games",
+        "computerWins": "The opponent won {{count}} times.",
+        "resultTitle": "Result of the match",
+        "playerWins": "You won {{count}} times.",
         "resetGame": "Restart",
-        "reStart": "Restart",
-        "nextRound": "Next round",
-        "ready": "Ready"
+        "reStart": "Start over",
+        "nextRound": "Next game",
+        "ready": "Ready",
+        "oneRound": "One game to determine the winner",
+        "threeRound": "Best of three",
+        "fiveRound": "Best of five",
+        "youWon": "You won.",
+        "youLose": "You lost.",
+        "draw": "Draw"
     }
 }
